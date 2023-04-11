@@ -52,24 +52,41 @@ class OrderAmdin(admin.ModelAdmin):
 
 @admin.register(models.Customer)
 class CustomerAdmin(admin.ModelAdmin):
-    list_display = ['first_name', 'last_name', 'membership']
+    list_display = ['first_name', 'last_name', 'membership', 'orders_count']
     list_editable = ['membership']
     list_per_page = 10
     ordering = ['first_name', 'last_name']
-    search_fields = ['first_name', 'last_name']
+    # add case insensitive lookup type for searching
+    search_fields = ['first_name__istartswith', 'last_name__istartswith']
 
     @admin.display(ordering='orders_count')
     def orders_count(self, customer):
         url = (
             reverse('admin:store_order_changelist') 
             + '?' 
-            + urlencode({'order_id': str(order.id)})
+            + urlencode({'customer_id': str(customer.id)})
         )
-        return format_html('<a href="{}">{}</a>', url, order.orders_count)
+        return format_html('<a href="{}">{}</a>', url, customer.orders_count)
 
     def get_queryset(self, request):
         return super().get_queryset(request).annotate(
             orders_count=Count('order')
         )
-
+    """
+    @admin.display(ordering='products_count')
+    def products_count(self, customer):
+        url = (
+            reverse('admin:store_order_changelist') 
+            + '?'
+            + urlencode({
+            'customer__id': str(customer.id)
+            }))
+        return format_html('<a href="{}">{}</a>', url, customer.products_count)
+        #return collection.products_count
+    
+    def get_queryset(self, request):
+        return super().get_queryset(request).annotate(
+            products_count=Count('order')
+        )
+    """
    
